@@ -67,9 +67,11 @@ BEGIN
     END;
 
     DECLARE @ExecuteInAuditDatabase NVARCHAR(MAX);
+
     SET @ExecuteInAuditDatabase = 'EXEC ' + @AuditDatabaseName + '..sp_executesql N''
     IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE [name] = ''''' + @Owner + ''''')
 	   EXECUTE(N''''CREATE SCHEMA ' + @Owner + ';'''');''';
+
     EXEC sp_executesql @ExecuteInAuditDatabase;
 
     -- Drop audit table if it exists and drop should be forced
@@ -81,6 +83,7 @@ BEGIN
 	   PRINT ''Dropping audit table [' + @AuditDatabaseName + '].[' + @Owner + '].[' + @TableName + @AuditNameExtension + '];
 	   DROP TABLE [' + @AuditDatabaseName + '].[' + @Owner + '].[' + @TableName + @AuditNameExtension + ']'';
     END';
+
     EXEC sp_executesql @ExecuteInAuditDatabase;
 
     -- Declare cursor to loop over columns
@@ -105,25 +108,29 @@ BEGIN
     OPEN TableColumns;
 
     -- Declare temp variable to fetch records into
-    DECLARE @ColumnName VARCHAR(128);
-    DECLARE @ColumnType VARCHAR(128);
-    DECLARE @ColumnLength SMALLINT;
-    DECLARE @ColumnNullable INT;
-    DECLARE @ColumnCollation sysname;
-    DECLARE @ColumnPrecision TINYINT;
-    DECLARE @ColumnScale TINYINT;
+    DECLARE @ColumnName VARCHAR(128)
+          , @ColumnType VARCHAR(128)
+          , @ColumnLength SMALLINT
+          , @ColumnNullable INT
+          , @ColumnCollation sysname
+          , @ColumnPrecision TINYINT
+          , @ColumnScale TINYINT;
 
     -- Declare variable to build statements
-    DECLARE @CreateStatement VARCHAR(MAX);
-    DECLARE @ListOfFields VARCHAR(MAX);
+    DECLARE @CreateStatement VARCHAR(MAX)
+          , @ListOfFields VARCHAR(MAX);
+
     SET @ListOfFields = '';
 
     -- Check if audit table exists
     DECLARE @IsAuditTableExistsInAuditDatabase BIT;
+
+    -- ***  TODO Missing Database name in where ? @AuditDatabaseName
     SET @ExecuteInAuditDatabase
         = 'EXEC ' + @AuditDatabaseName + '..sp_executesql N''' + '
     IF EXISTS(SELECT 1 FROM sys.sysobjects WHERE id = OBJECT_ID(N''''[' + @Owner + '].[' + @TableName + @AuditNameExtension
           + ']'''') AND OBJECTPROPERTY(id, N''''IsUserTable'''') = 1) SET @IsAuditTableExistsInAuditDatabase = 1; ELSE SET @IsAuditTableExistsInAuditDatabase = 0;'', N''@IsAuditTableExistsInAuditDatabase BIT OUTPUT'', @IsAuditTableExistsInAuditDatabase OUTPUT';
+
     EXEC sp_executesql @ExecuteInAuditDatabase
                      , N'@IsAuditTableExistsInAuditDatabase BIT OUTPUT'
                      , @IsAuditTableExistsInAuditDatabase OUTPUT;
@@ -240,14 +247,14 @@ BEGIN
 
         -- Start of create table
         SET @CreateStatement = 'CREATE TABLE [' + @AuditDatabaseName + '].[' + @Owner + '].[' + @TableName + @AuditNameExtension + '] (';
-        SET @CreateStatement = @CreateStatement + '[AuditId] [BIGINT] IDENTITY (1, 1) NOT NULL';
+        SET @CreateStatement += '[AuditId] [BIGINT] IDENTITY (1, 1) NOT NULL';
 
         -- Add audit trail columns
-        SET @CreateStatement = @CreateStatement + ',[AuditAction] [CHAR] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL';
-        SET @CreateStatement = @CreateStatement + ',[AuditDate] [DATETIME] NOT NULL';
-        SET @CreateStatement = @CreateStatement + ',[AuditUser] [VARCHAR] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL';
-        SET @CreateStatement = @CreateStatement + ',[AuditApp] [VARCHAR](128) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL';
-        SET @CreateStatement = @CreateStatement + ',[AuditTransactionId] [BIGINT] NOT NULL';
+        SET @CreateStatement += ',[AuditAction] [CHAR] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL';
+        SET @CreateStatement += ',[AuditDate] [DATETIME] NOT NULL';
+        SET @CreateStatement += ',[AuditUser] [VARCHAR] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL';
+        SET @CreateStatement += ',[AuditApp] [VARCHAR](128) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL';
+        SET @CreateStatement += ',[AuditTransactionId] [BIGINT] NOT NULL';
 
         FETCH NEXT FROM TableColumns
         INTO @ColumnName
@@ -319,18 +326,17 @@ BEGIN
 
         -- Set primary key and default values
         SET @CreateStatement = 'ALTER TABLE [' + @AuditDatabaseName + '].[' + @Owner + '].[' + @TableName + @AuditNameExtension + '] ADD ';
-        SET @CreateStatement = @CreateStatement + 'CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditDate] DEFAULT (';
-        SET @CreateStatement = @CreateStatement + CASE
-                                                      WHEN @UseUTCDateTime = 0 THEN
-                                                          'GETDATE()'
-                                                      ELSE
-                                                          'GetUTCDate()'
-                                                  END + ') FOR [AuditDate]';
-        SET @CreateStatement = @CreateStatement + ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditUser] DEFAULT (SUSER_SNAME()) FOR [AuditUser]';
-        SET @CreateStatement = @CreateStatement + ',CONSTRAINT [PK_' + @TableName + @AuditNameExtension + '] PRIMARY KEY  CLUSTERED ([AuditId])  ON [PRIMARY]';
-        SET @CreateStatement
-            = @CreateStatement + ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditApp]  DEFAULT (''App=('' + RTRIM(ISNULL(APP_NAME(),'''')) + '') '') for [AuditApp]';
-        SET @CreateStatement = @CreateStatement + ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditTransactionId] DEFAULT (0) FOR [AuditTransactionId]';
+        SET @CreateStatement += 'CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditDate] DEFAULT (';
+        SET @CreateStatement += CASE
+                                    WHEN @UseUTCDateTime = 0 THEN
+                                        'GETDATE()'
+                                    ELSE
+                                        'GetUTCDate()'
+                                END + ') FOR [AuditDate]';
+        SET @CreateStatement += ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditUser] DEFAULT (SUSER_SNAME()) FOR [AuditUser]';
+        SET @CreateStatement += ',CONSTRAINT [PK_' + @TableName + @AuditNameExtension + '] PRIMARY KEY  CLUSTERED ([AuditId])  ON [PRIMARY]';
+        SET @CreateStatement += ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditApp]  DEFAULT (''App=('' + RTRIM(ISNULL(APP_NAME(),'''')) + '') '') for [AuditApp]';
+        SET @CreateStatement += ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditTransactionId] DEFAULT (0) FOR [AuditTransactionId]';
 
         PRINT 'Setting primary key and default values';
         PRINT @CreateStatement;
