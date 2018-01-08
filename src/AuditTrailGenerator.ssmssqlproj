@@ -3,6 +3,18 @@
   <Items>
     <LogicalFolder Name="Connections" Type="2" Sorted="true">
       <Items>
+        <ConnectionNode Name="MSUSITLRVS01\LHHR01:LHHINC\jim.mcaleer">
+          <Created>2018-01-08T10:51:11.5978576-05:00</Created>
+          <Type>SQL</Type>
+          <Server>MSUSITLRVS01\LHHR01</Server>
+          <UserName />
+          <Authentication>Windows Authentication</Authentication>
+          <InitialDB />
+          <LoginTimeout>30</LoginTimeout>
+          <ExecutionTimeout>0</ExecutionTimeout>
+          <ConnectionProtocol>NotSpecified</ConnectionProtocol>
+          <ApplicationName>Microsoft SQL Server Management Studio - Query</ApplicationName>
+        </ConnectionNode>
         <ConnectionNode Name="MSUSITLSPS02:LHHINC\jim.mcaleer">
           <Created>2018-01-08T10:34:13.0943612-05:00</Created>
           <Type>SQL</Type>
@@ -20,8 +32,8 @@
     <LogicalFolder Name="Queries" Type="0" Sorted="true">
       <Items>
         <FileNode Name="AuditTrailGenerator.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:MSUSITLSPS02:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>MSUSITLSPS02</AssociatedConnSrvName>
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:MSUSITLRVS01\LHHR01:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>MSUSITLRVS01\LHHR01</AssociatedConnSrvName>
           <AssociatedConnUserName />
           <FullPath>AuditTrailGenerator.sql</FullPath>
         </FileNode>
