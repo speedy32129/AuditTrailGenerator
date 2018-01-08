@@ -25,6 +25,9 @@ ALTER PROCEDURE dbo.GenerateAuditTrail
 AS
 BEGIN
 
+    -- Internal setting - *** TODO ** update to configuration table
+    DECLARE @UseUTCDateTime BIT = 1;
+
     IF @AuditDatabaseName IS NULL
         SET @AuditDatabaseName =
     (
@@ -316,7 +319,13 @@ BEGIN
 
         -- Set primary key and default values
         SET @CreateStatement = 'ALTER TABLE [' + @AuditDatabaseName + '].[' + @Owner + '].[' + @TableName + @AuditNameExtension + '] ADD ';
-        SET @CreateStatement = @CreateStatement + 'CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditDate] DEFAULT (GETDATE()) FOR [AuditDate]';
+        SET @CreateStatement = @CreateStatement + 'CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditDate] DEFAULT (';
+        SET @CreateStatement = @CreateStatement + CASE
+                                                      WHEN @UseUTCDateTime = 0 THEN
+                                                          'GETDATE()'
+                                                      ELSE
+                                                          'GetUTCDate()'
+                                                  END + ') FOR [AuditDate]';
         SET @CreateStatement = @CreateStatement + ',CONSTRAINT [DF_' + @TableName + @AuditNameExtension + '_AuditUser] DEFAULT (SUSER_SNAME()) FOR [AuditUser]';
         SET @CreateStatement = @CreateStatement + ',CONSTRAINT [PK_' + @TableName + @AuditNameExtension + '] PRIMARY KEY  CLUSTERED ([AuditId])  ON [PRIMARY]';
         SET @CreateStatement
