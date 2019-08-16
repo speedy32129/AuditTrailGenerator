@@ -349,4 +349,4 @@ healthchecksdb
 MigrationBackup/
 
 # Ignore .vs folder for SSMS projects
-/.vs/*
+*/.vs/*
